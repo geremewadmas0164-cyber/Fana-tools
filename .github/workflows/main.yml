@@ -1,0 +1,47 @@
+name: Build Fana Tools APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Extract Fana Tools project
+        shell: bash
+        run: |
+          mkdir -p fana_project
+          unzip -q Fana_Tools_Application_2.0.zip -d fana_project
+
+          if [ -f "fana_project/Fana_Tools_App/pubspec.yaml" ]; then
+            cp -a fana_project/Fana_Tools_App/. .
+          else
+            cp -a fana_project/. .
+          fi
+
+      - name: Create Android platform
+        run: flutter create --platforms=android .
+
+      - name: Get Flutter packages
+        run: flutter pub get
+
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: fana-tools-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
